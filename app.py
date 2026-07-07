@@ -105,16 +105,17 @@ def horario_ocupado(
         )
 
 
-        if novo_inicio < fim and novo_fim > inicio:
+                if novo_inicio < fim and novo_fim > inicio:
 
             return True
 
 
     return False
-    
-    @app.route("/")
-def inicio():
 
+
+
+@app.route("/")
+def inicio():
     lista = carregar()
 
     lista.sort(
