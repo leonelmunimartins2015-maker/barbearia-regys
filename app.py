@@ -17,7 +17,6 @@ def carregar():
     if os.path.exists(ARQUIVO):
 
         try:
-
             with open(
                 ARQUIVO,
                 "r",
@@ -38,11 +37,9 @@ def carregar():
 
             return lista
 
-
         except:
 
             return []
-
 
     return []
 
@@ -70,20 +67,15 @@ def duracao_servico(servico):
     tempos = {
 
         "Corte": 30,
-
         "Barba": 15,
-
         "Corte + Barba": 40,
-
         "Corte + Sobrancelha": 35,
-
         "Corte + Pigmentação": 60,
-
         "🍽️ Horário de almoço": 40
 
     }
 
-    return tempos.get(servico,30)
+    return tempos.get(servico, 30)
 
 
 
@@ -105,7 +97,7 @@ def horario_ocupado(
         )
 
 
-                if novo_inicio < fim and novo_fim > inicio:
+        if novo_inicio < fim and novo_fim > inicio:
 
             return True
 
@@ -116,6 +108,7 @@ def horario_ocupado(
 
 @app.route("/")
 def inicio():
+
     lista = carregar()
 
     lista.sort(
@@ -124,6 +117,7 @@ def inicio():
             x["hora"]
         )
     )
+
 
     agenda = ""
 
@@ -140,18 +134,17 @@ def inicio():
         if session.get("barbeiro"):
 
             botoes = f"""
-            <button onclick="cancelar({a['id']})">
-            Cancelar
-            </button>
+<button onclick="cancelar({a['id']})">
+Cancelar
+</button>
 
-            <button onclick="editar({a['id']})">
-            Editar
-            </button>
-            """
+<button onclick="editar({a['id']})">
+Editar
+</button>
+"""
 
 
         agenda += f"""
-
 <div class="ag">
 
 👤 <b>{a['nome']}</b><br>
@@ -165,12 +158,10 @@ def inicio():
 {botoes}
 
 </div>
-
 """
 
 
     return """
-
 <!DOCTYPE html>
 
 <html>
@@ -185,35 +176,25 @@ def inicio():
 <style>
 
 body{
-
 margin:0;
 font-family:Arial;
-
 background-image:url(
 "https://images.unsplash.com/photo-1621605815971-fbc98d665033"
 );
-
 background-size:cover;
 background-position:center;
-
 color:white;
-
 display:flex;
 justify-content:center;
-
 padding:20px;
-
 }
 
 
 .caixa{
 
 background:rgba(0,0,0,0.85);
-
 width:380px;
-
 padding:25px;
-
 border-radius:20px;
 
 }
@@ -222,13 +203,9 @@ border-radius:20px;
 input,select,button{
 
 width:100%;
-
 padding:12px;
-
 margin-top:10px;
-
 border-radius:8px;
-
 border:none;
 
 }
@@ -237,9 +214,7 @@ border:none;
 button{
 
 background:#d4af37;
-
 font-weight:bold;
-
 cursor:pointer;
 
 }
@@ -248,11 +223,8 @@ cursor:pointer;
 .ag{
 
 background:#333;
-
 padding:15px;
-
 margin-top:15px;
-
 border-radius:10px;
 
 }
@@ -261,13 +233,11 @@ border-radius:10px;
 h1,h2{
 
 text-align:center;
-
 color:#d4af37;
 
 }
 
 </style>
-
 
 </head>
 
@@ -312,6 +282,7 @@ AGENDAR
 
 <input id="senha" type="password" placeholder="Senha">
 
+
 <button onclick="login()">
 Entrar
 </button>
@@ -328,6 +299,7 @@ Entrar
 
 <script>
 
+
 function agendar(){
 
 fetch("/agendar",{
@@ -341,11 +313,8 @@ headers:{
 body:JSON.stringify({
 
 nome:nome.value,
-
 servico:servico.value,
-
 data:data.value,
-
 hora:hora.value
 
 })
@@ -397,6 +366,7 @@ location.reload();
 }
 
 
+
 function cancelar(id){
 
 if(confirm("Cancelar agendamento?")){
@@ -412,7 +382,6 @@ method:"DELETE"
 }
 
 }
-
 
 
 function editar(id){
@@ -462,14 +431,12 @@ def login():
         session["barbeiro"] = True
 
         return jsonify({
-            "mensagem":
-            "Acesso liberado!"
+            "mensagem":"Acesso liberado!"
         })
 
 
     return jsonify({
-        "mensagem":
-        "Senha incorreta!"
+        "mensagem":"Senha incorreta!"
     })
 
 
@@ -483,7 +450,7 @@ def agendar():
 
 
     # Regra especial:
-    # somente "Regys do corte"
+    # apenas o nome exato Regys do corte
     # vira horário de almoço
 
     if nome.lower() == "regys do corte":
@@ -511,7 +478,7 @@ def agendar():
     )
 
 
-    # Expediente 11:00 até 17:00
+    # Expediente 11:00 às 17:00
 
     if inicio.hour < 11 or fim.hour > 17:
 
@@ -531,7 +498,6 @@ def agendar():
             "mensagem":
             "Horário já ocupado"
         })
-
 
 
     novo_id = 1
@@ -556,10 +522,8 @@ def agendar():
 
 
     return jsonify({
-
         "mensagem":
         "Agendamento realizado!"
-
     })
 
 
@@ -589,10 +553,8 @@ def cancelar(id):
 
 
     return jsonify({
-
         "mensagem":
         "Agendamento cancelado!"
-
     })
 
 
@@ -621,15 +583,12 @@ def editar(id):
             a["nome"] = dados["nome"]
 
 
-
     salvar(lista)
 
 
     return jsonify({
-
         "mensagem":
         "Agendamento editado!"
-
     })
 
 
