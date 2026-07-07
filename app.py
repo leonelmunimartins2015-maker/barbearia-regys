@@ -1,11 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from datetime import datetime, timedelta
 import json
 import os
 
 app = Flask(__name__)
 
+app.secret_key = "chave_barbearia_regys"
+
 ARQUIVO = "agendamentos.json"
+
+SENHA_BARBEIRO = "019283"
 
 
 def carregar():
@@ -14,8 +18,14 @@ def carregar():
 
         try:
 
-            with open(ARQUIVO, "r", encoding="utf-8") as f:
+            with open(
+                ARQUIVO,
+                "r",
+                encoding="utf-8"
+            ) as f:
+
                 lista = json.load(f)
+
 
             for i, ag in enumerate(lista):
 
@@ -25,11 +35,14 @@ def carregar():
                 if "duracao" not in ag:
                     ag["duracao"] = 30
 
+
             return lista
+
 
         except:
 
             return []
+
 
     return []
 
@@ -37,7 +50,11 @@ def carregar():
 
 def salvar(lista):
 
-    with open(ARQUIVO, "w", encoding="utf-8") as f:
+    with open(
+        ARQUIVO,
+        "w",
+        encoding="utf-8"
+    ) as f:
 
         json.dump(
             lista,
@@ -66,11 +83,15 @@ def duracao_servico(servico):
 
     }
 
-    return tempos.get(servico, 30)
+    return tempos.get(servico,30)
 
 
 
-def horario_ocupado(novo_inicio, novo_fim, lista):
+def horario_ocupado(
+    novo_inicio,
+    novo_fim,
+    lista
+):
 
     for ag in lista:
 
@@ -83,14 +104,14 @@ def horario_ocupado(novo_inicio, novo_fim, lista):
             minutes=ag["duracao"]
         )
 
+
         if novo_inicio < fim and novo_fim > inicio:
+
             return True
 
+
     return False
-
-
-
-@app.route("/")
+    @app.route("/")
 def inicio():
 
     lista = carregar()
@@ -112,29 +133,34 @@ def inicio():
         ).strftime("%d/%m/%Y")
 
 
+        botoes = ""
+
+        if session.get("barbeiro"):
+
+            botoes = f"""
+            <button onclick="cancelar({a['id']})">
+            Cancelar
+            </button>
+
+            <button onclick="editar({a['id']})">
+            Editar
+            </button>
+            """
+
+
         agenda += f"""
 
 <div class="ag">
 
 👤 <b>{a['nome']}</b><br>
-
 📅 {data}<br>
-
 🕒 {a['hora']}<br>
-
 ✂️ {a['servico']}<br>
-
 ⏱️ {a['duracao']} minutos
 
 <br><br>
 
-<button onclick="cancelar({a['id']})">
-Cancelar
-</button>
-
-<button onclick="editar({a['id']})">
-Editar
-</button>
+{botoes}
 
 </div>
 
@@ -159,7 +185,6 @@ Editar
 body{
 
 margin:0;
-
 font-family:Arial;
 
 background-image:url(
@@ -167,13 +192,11 @@ background-image:url(
 );
 
 background-size:cover;
-
 background-position:center;
 
 color:white;
 
 display:flex;
-
 justify-content:center;
 
 padding:20px;
@@ -262,13 +285,9 @@ color:#d4af37;
 <select id="servico">
 
 <option>Corte</option>
-
 <option>Barba</option>
-
 <option>Corte + Barba</option>
-
 <option>Corte + Sobrancelha</option>
-
 <option>Corte + Pigmentação</option>
 
 </select>
@@ -284,6 +303,18 @@ AGENDAR
 </button>
 
 
+<hr>
+
+
+<h2>🔒 Área do barbeiro</h2>
+
+<input id="senha" type="password" placeholder="Senha">
+
+<button onclick="login()">
+Entrar
+</button>
+
+
 <h2>📋 Agenda</h2>
 
 
@@ -294,7 +325,6 @@ AGENDAR
 
 
 <script>
-
 
 function agendar(){
 
@@ -320,7 +350,6 @@ hora:hora.value
 
 })
 
-
 .then(r=>r.json())
 
 .then(r=>{
@@ -335,17 +364,23 @@ location.reload();
 
 
 
-function cancelar(id){
+function login(){
 
-if(confirm("Cancelar agendamento?")){
+fetch("/login",{
 
+method:"POST",
 
-fetch("/cancelar/"+id,{
+headers:{
+"Content-Type":"application/json"
+},
 
-method:"DELETE"
+body:JSON.stringify({
+
+senha:senha.value
 
 })
 
+})
 
 .then(r=>r.json())
 
@@ -357,6 +392,20 @@ location.reload();
 
 });
 
+}
+
+
+function cancelar(id){
+
+if(confirm("Cancelar agendamento?")){
+
+fetch("/cancelar/"+id,{
+
+method:"DELETE"
+
+})
+
+.then(()=>location.reload());
 
 }
 
@@ -366,10 +415,9 @@ location.reload();
 
 function editar(id){
 
-let novoNome = prompt("Novo nome:");
+let nomeNovo = prompt("Novo nome:");
 
-if(novoNome){
-
+if(nomeNovo){
 
 fetch("/editar/"+id,{
 
@@ -381,28 +429,17 @@ headers:{
 
 body:JSON.stringify({
 
-nome:novoNome
+nome:nomeNovo
 
 })
 
 })
 
-
-.then(r=>r.json())
-
-.then(r=>{
-
-alert(r.mensagem);
-
-location.reload();
-
-});
-
+.then(()=>location.reload());
 
 }
 
 }
-
 
 </script>
 
@@ -413,6 +450,28 @@ location.reload();
 
 """
 
+@app.route("/login", methods=["POST"])
+def login():
+
+    dados = request.json
+
+    if dados["senha"] == SENHA_BARBEIRO:
+
+        session["barbeiro"] = True
+
+        return jsonify({
+            "mensagem":
+            "Acesso liberado!"
+        })
+
+
+    return jsonify({
+        "mensagem":
+        "Senha incorreta!"
+    })
+
+
+
 @app.route("/agendar", methods=["POST"])
 def agendar():
 
@@ -421,8 +480,8 @@ def agendar():
     nome = dados["nome"].strip()
 
 
-    # REGRA ESPECIAL:
-    # somente o nome exato "Regys do corte"
+    # Regra especial:
+    # somente "Regys do corte"
     # vira horário de almoço
 
     if nome.lower() == "regys do corte":
@@ -455,10 +514,8 @@ def agendar():
     if inicio.hour < 11 or fim.hour > 17:
 
         return jsonify({
-
             "mensagem":
             "Fora do horário de funcionamento"
-
         })
 
 
@@ -469,15 +526,13 @@ def agendar():
     ):
 
         return jsonify({
-
             "mensagem":
             "Horário já ocupado"
-
         })
 
 
-    novo_id = 1
 
+    novo_id = 1
 
     if lista:
 
@@ -507,8 +562,17 @@ def agendar():
 
 
 
+
 @app.route("/cancelar/<int:id>", methods=["DELETE"])
 def cancelar(id):
+
+    if not session.get("barbeiro"):
+
+        return jsonify({
+            "mensagem":
+            "Acesso negado"
+        })
+
 
     lista = carregar()
 
@@ -531,8 +595,17 @@ def cancelar(id):
 
 
 
+
 @app.route("/editar/<int:id>", methods=["PUT"])
 def editar(id):
+
+    if not session.get("barbeiro"):
+
+        return jsonify({
+            "mensagem":
+            "Acesso negado"
+        })
+
 
     dados = request.json
 
@@ -544,6 +617,7 @@ def editar(id):
         if a["id"] == id:
 
             a["nome"] = dados["nome"]
+
 
 
     salvar(lista)
@@ -558,6 +632,7 @@ def editar(id):
 
 
 
+
 if __name__ == "__main__":
 
     app.run(
@@ -565,3 +640,4 @@ if __name__ == "__main__":
         port=5001,
         debug=False
     )
+    
