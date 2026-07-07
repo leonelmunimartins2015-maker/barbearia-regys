@@ -9,42 +9,85 @@ ARQUIVO = "agendamentos.json"
 
 
 def carregar():
+
     if os.path.exists(ARQUIVO):
+
         try:
+
             with open(ARQUIVO, "r", encoding="utf-8") as f:
                 lista = json.load(f)
 
-                for a in lista:
-                    if "id" not in a:
-                        a["id"] = lista.index(a) + 1
+            for i, ag in enumerate(lista):
 
-                    if "duracao" not in a:
-                        a["duracao"] = 30
+                if "id" not in ag:
+                    ag["id"] = i + 1
 
-                return lista
+                if "duracao" not in ag:
+                    ag["duracao"] = 30
+
+            return lista
 
         except:
+
             return []
 
     return []
 
 
+
 def salvar(lista):
+
     with open(ARQUIVO, "w", encoding="utf-8") as f:
-        json.dump(lista, f, ensure_ascii=False, indent=4)
+
+        json.dump(
+            lista,
+            f,
+            ensure_ascii=False,
+            indent=4
+        )
+
 
 
 def duracao_servico(servico):
 
     tempos = {
+
         "Corte": 30,
+
         "Barba": 15,
+
         "Corte + Barba": 40,
+
         "Corte + Sobrancelha": 35,
-        "Corte + Pigmentação": 60
+
+        "Corte + Pigmentação": 60,
+
+        "🍽️ Horário de almoço": 40
+
     }
 
     return tempos.get(servico, 30)
+
+
+
+def horario_ocupado(novo_inicio, novo_fim, lista):
+
+    for ag in lista:
+
+        inicio = datetime.strptime(
+            ag["data"] + " " + ag["hora"],
+            "%Y-%m-%d %H:%M"
+        )
+
+        fim = inicio + timedelta(
+            minutes=ag["duracao"]
+        )
+
+        if novo_inicio < fim and novo_fim > inicio:
+            return True
+
+    return False
+
 
 
 @app.route("/")
@@ -52,7 +95,12 @@ def inicio():
 
     lista = carregar()
 
-    lista.sort(key=lambda x: (x["data"], x["hora"]))
+    lista.sort(
+        key=lambda x: (
+            x["data"],
+            x["hora"]
+        )
+    )
 
     agenda = ""
 
@@ -63,28 +111,40 @@ def inicio():
             "%Y-%m-%d"
         ).strftime("%d/%m/%Y")
 
+
         agenda += f"""
-        <div class="ag">
-        👤 <b>{a['nome']}</b><br>
-        📅 {data}<br>
-        🕒 {a['hora']}<br>
-        ✂️ {a['servico']}<br>
-        ⏱️ {a['duracao']} minutos<br><br>
 
-        <button onclick="cancelar({a['id']})">
-        Cancelar
-        </button>
+<div class="ag">
 
-        <button onclick="editar({a['id']})">
-        Editar
-        </button>
+👤 <b>{a['nome']}</b><br>
 
-        </div>
-        """
+📅 {data}<br>
+
+🕒 {a['hora']}<br>
+
+✂️ {a['servico']}<br>
+
+⏱️ {a['duracao']} minutos
+
+<br><br>
+
+<button onclick="cancelar({a['id']})">
+Cancelar
+</button>
+
+<button onclick="editar({a['id']})">
+Editar
+</button>
+
+</div>
+
+"""
+
 
     return """
-    
-    <!DOCTYPE html>
+
+<!DOCTYPE html>
+
 <html>
 
 <head>
@@ -93,28 +153,42 @@ def inicio():
 
 <title>Barbearia Regys</title>
 
+
 <style>
 
 body{
+
 margin:0;
+
 font-family:Arial;
+
 background-image:url(
 "https://images.unsplash.com/photo-1621605815971-fbc98d665033"
 );
+
 background-size:cover;
+
 background-position:center;
+
 color:white;
+
 display:flex;
+
 justify-content:center;
+
 padding:20px;
+
 }
 
 
 .caixa{
 
 background:rgba(0,0,0,0.85);
+
 width:380px;
+
 padding:25px;
+
 border-radius:20px;
 
 }
@@ -123,9 +197,13 @@ border-radius:20px;
 input,select,button{
 
 width:100%;
+
 padding:12px;
+
 margin-top:10px;
+
 border-radius:8px;
+
 border:none;
 
 }
@@ -134,7 +212,9 @@ border:none;
 button{
 
 background:#d4af37;
+
 font-weight:bold;
+
 cursor:pointer;
 
 }
@@ -143,8 +223,11 @@ cursor:pointer;
 .ag{
 
 background:#333;
+
 padding:15px;
+
 margin-top:15px;
+
 border-radius:10px;
 
 }
@@ -153,11 +236,13 @@ border-radius:10px;
 h1,h2{
 
 text-align:center;
+
 color:#d4af37;
 
 }
 
 </style>
+
 
 </head>
 
@@ -177,16 +262,19 @@ color:#d4af37;
 <select id="servico">
 
 <option>Corte</option>
+
 <option>Barba</option>
+
 <option>Corte + Barba</option>
+
 <option>Corte + Sobrancelha</option>
+
 <option>Corte + Pigmentação</option>
 
 </select>
 
 
 <input id="data" type="date">
-
 
 <input id="hora" type="time">
 
@@ -203,7 +291,6 @@ AGENDAR
 
 
 </div>
-
 
 
 <script>
@@ -233,6 +320,7 @@ hora:hora.value
 
 })
 
+
 .then(r=>r.json())
 
 .then(r=>{
@@ -251,11 +339,13 @@ function cancelar(id){
 
 if(confirm("Cancelar agendamento?")){
 
+
 fetch("/cancelar/"+id,{
 
 method:"DELETE"
 
 })
+
 
 .then(r=>r.json())
 
@@ -266,6 +356,7 @@ alert(r.mensagem);
 location.reload();
 
 });
+
 
 }
 
@@ -278,6 +369,7 @@ function editar(id){
 let novoNome = prompt("Novo nome:");
 
 if(novoNome){
+
 
 fetch("/editar/"+id,{
 
@@ -295,6 +387,7 @@ nome:novoNome
 
 })
 
+
 .then(r=>r.json())
 
 .then(r=>{
@@ -305,10 +398,10 @@ location.reload();
 
 });
 
-}
 
 }
 
+}
 
 
 </script>
@@ -325,7 +418,21 @@ def agendar():
 
     dados = request.json
 
+    nome = dados["nome"].strip()
+
+
+    # REGRA ESPECIAL:
+    # somente o nome exato "Regys do corte"
+    # vira horário de almoço
+
+    if nome.lower() == "regys do corte":
+
+        dados["servico"] = "🍽️ Horário de almoço"
+
+
+
     lista = carregar()
+
 
     duracao = duracao_servico(
         dados["servico"]
@@ -343,40 +450,41 @@ def agendar():
     )
 
 
+    # Expediente 11:00 até 17:00
+
     if inicio.hour < 11 or fim.hour > 17:
 
         return jsonify({
-            "mensagem":"Fora do horário de funcionamento"
+
+            "mensagem":
+            "Fora do horário de funcionamento"
+
         })
 
 
-    for a in lista:
+    if horario_ocupado(
+        inicio,
+        fim,
+        lista
+    ):
 
-        inicio2 = datetime.strptime(
-            a["data"] + " " + a["hora"],
-            "%Y-%m-%d %H:%M"
-        )
+        return jsonify({
 
+            "mensagem":
+            "Horário já ocupado"
 
-        fim2 = inicio2 + timedelta(
-            minutes=a["duracao"]
-        )
-
-
-        if inicio < fim2 and fim > inicio2:
-
-            return jsonify({
-                "mensagem":"Horário já ocupado"
-            })
+        })
 
 
     novo_id = 1
+
 
     if lista:
 
         novo_id = max(
             a["id"] for a in lista
         ) + 1
+
 
 
     dados["id"] = novo_id
@@ -386,13 +494,16 @@ def agendar():
 
     lista.append(dados)
 
+
     salvar(lista)
 
 
     return jsonify({
-        "mensagem":"Agendamento realizado!"
-    })
 
+        "mensagem":
+        "Agendamento realizado!"
+
+    })
 
 
 
@@ -412,9 +523,11 @@ def cancelar(id):
 
 
     return jsonify({
-        "mensagem":"Agendamento cancelado!"
-    })
 
+        "mensagem":
+        "Agendamento cancelado!"
+
+    })
 
 
 
@@ -437,9 +550,11 @@ def editar(id):
 
 
     return jsonify({
-        "mensagem":"Agendamento editado!"
-    })
 
+        "mensagem":
+        "Agendamento editado!"
+
+    })
 
 
 
