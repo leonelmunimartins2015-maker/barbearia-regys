@@ -40,26 +40,22 @@ def enviar_whatsapp(mensagem):
             TWILIO_AUTH_TOKEN
         )
 
+        envio = client.messages.create(
 
-        client.messages.create(
+            from_=WHATSAPP_ORIGEM,
 
-    from_="whatsapp:+14155238886",
+            body=mensagem,
 
-    body=mensagem,
+            to=WHATSAPP_DESTINO
 
-    to="whatsapp:+5524999351341"
+        )
 
-)
-
-
-
-        print("WhatsApp enviado!")
+        print("SID DO WHATSAPP:", envio.sid)
 
 
     except Exception as erro:
 
-        print("WhatsApp não enviado:", erro)
-
+        print("ERRO TWILIO:", erro)
 
 
 
@@ -644,12 +640,11 @@ def editar(id):
 
 if __name__ == "__main__":
 
-
     app.run(
 
         host="0.0.0.0",
 
-        port=5001,
+        port=int(os.environ.get("PORT", 5001)),
 
         debug=False
 
