@@ -111,6 +111,7 @@ def horario_ocupado(
 
 
     return False
+    
     @app.route("/")
 def inicio():
 
@@ -640,4 +641,3 @@ if __name__ == "__main__":
         port=5001,
         debug=False
     )
-    
